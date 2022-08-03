@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>工具起始页</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+    <script src="data.js"></script>
+    <script src="js/vue.global.prod.js"></script>
+    <script src="js/base.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="block" v-for="block in data" :class="block.name" onclick="this.querySelector('input').focus()">
+        <block :block="block"></block>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    data: data
+                }
+            }
+        });
+        app.component('block', {
+            props: ['block'],
+            data() {
+                return {
+                    select: '',
+                    content: '',
+                    logo:'',
+                }
+            },
+            template: `
+            <div v-if="block.title" class="title">{{block.title}}</div>
+            <div v-if="block.input_box" class="input-box">
+                <div class="content-box">
+                    <div class="logo" @dblclick="content=''">
+                        <img v-if="block.input_box.logo" :src="block.input_box.logo" />
+                        <img v-else :src="logo" />
+                    </div>
+                    <div class="content">
+                        <input :placeholder="block.input_box.placeholder" autocomplete="off" v-model="content" @keyup.enter="execute">
+                    </div>
+                    <div class="button" @click="execute">{{block.input_box.button}}</div>
+                </div>
+                <div v-if="block.input_box.radios" class="radios-box">
+                    <div v-for="radio in block.input_box.radios" class="radios" @click="logo=radio.logo">
+                        <label :for="block.name+radio.name">
+                            <input type="radio" v-model="select" :value="radio.url" :id="block.name+radio.name">
+                            <span></span>
+                            {{radio.name}}
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div v-if="block.extend_html" v-html="block.extend_html" class="extend"></div>
+            `,
+            methods:{
+                execute(){
+                    if(!this.content){
+                        alert(this.block.input_box.if_blank);
+                        return
+                    }
+                    if(this.block.input_box.execute=='open_new_page'){
+                        document.location.href = this.select.format(this.content);
+                    }
+                    else if(this.block.input_box.execute=='eval_extend_js'){
+                        eval(this.block.extend_js);
+                    }
+                    else if(this.block.input_box.execute=='copy'){
+                        copy(this.select.format(this.content))
+                    }
+                    else if(this.block.input_box.execute=='copy_raw'){
+                        copy(this.select.format(this.content), false)
+                    }
+                },
+            },
+            mounted(){
+                if(this.block.input_box){
+                    if(this.block.input_box.radios){
+                        this.select=this.block.input_box.radios[0].url;
+                        this.logo=this.block.input_box.radios[0].logo;
+                    }
+                }
+            }
+        })
+        const vm = app.mount('body');
+        // 默认聚焦第一个输入框
+        document.querySelector("input").focus();
+    </script>
+</body>
+
+</html>
